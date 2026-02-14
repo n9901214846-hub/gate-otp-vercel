@@ -1,20 +1,23 @@
 const speakeasy = require("speakeasy");
 
-const STEP_SECONDS = 30 * 60; // 30 minutes
+const STEP_SECONDS = 30 * 60;
 const DIGITS = 6;
 
-module.exports = (req, res) => {
+function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Max-Age", "86400");
+}
+
+module.exports = (req, res) => {
+  setCors(res);
 
   if (req.method === "OPTIONS") return res.status(204).end();
-  if (req.method !== "GET") return res.status(405).json({ ok: false });
+  if (req.method !== "GET") return res.status(405).json({ ok: false, error: "Use GET" });
 
   const SECRET = process.env.GATE_OTP_SECRET;
-  if (!SECRET) {
-    return res.status(500).json({ ok: false, error: "Missing GATE_OTP_SECRET" });
-  }
+  if (!SECRET) return res.status(500).json({ ok: false, error: "Missing GATE_OTP_SECRET" });
 
   const now = Date.now();
 
@@ -30,7 +33,6 @@ module.exports = (req, res) => {
   const remainingSeconds = STEP_SECONDS - mod;
 
   res.setHeader("Cache-Control", "no-store");
-
   return res.json({
     ok: true,
     code,
