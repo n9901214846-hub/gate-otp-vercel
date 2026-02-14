@@ -16,6 +16,7 @@
     button{width:100%;margin-top:14px;border:0;border-radius:14px;padding:12px;font-weight:900;background:#c1121f;color:#fff;cursor:pointer}
     button:active{transform:scale(.99)}
     .small{margin-top:10px;font-size:12px;opacity:.65}
+    .err{margin-top:10px;padding:10px;border-radius:12px;border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);display:none}
   </style>
 </head>
 <body>
@@ -35,18 +36,30 @@
     </div>
 
     <button id="refresh">Refresh now</button>
-    <div class="small">After deploying on Vercel, set BASE to your Vercel URL.</div>
+    <div id="err" class="err"></div>
+    <div class="small">Backend: <span id="baseTxt"></span></div>
   </div>
 
 <script>
-  // ✅ Change this after Vercel deploy:
-  // Example: const BASE = "https://gate-otp-vercel.vercel.app";
-const BASE = "https://gate-otp-vercel.vercel.app";
+  const BASE = "https://gate-otp-vercel.vercel.app";
+  document.getElementById("baseTxt").textContent = BASE;
+
+  const errBox = document.getElementById("err");
+  function showErr(msg){
+    errBox.style.display = "block";
+    errBox.textContent = msg;
+  }
+  function clearErr(){
+    errBox.style.display = "none";
+    errBox.textContent = "";
+  }
 
   async function fetchCode(){
+    clearErr();
     const r = await fetch(`${BASE}/api/gateCode`, { cache: "no-store" });
     const j = await r.json();
-    if(!j.ok) throw new Error(j.error || "Failed");
+
+    if(!j.ok) throw new Error(j.error || "Failed to fetch code");
 
     document.getElementById("code").textContent = j.code;
     document.getElementById("stime").textContent = j.serverTime;
@@ -60,15 +73,22 @@ const BASE = "https://gate-otp-vercel.vercel.app";
       const m = String(Math.floor(sec/60)).padStart(2,"0");
       const s = String(sec%60).padStart(2,"0");
       document.getElementById("timer").textContent = `${m}:${s}`;
-      if(sec <= 0){ fetchCode().catch(console.error); return; }
+      if(sec <= 0){
+        fetchCode().catch(e => showErr(e.message));
+        return;
+      }
       sec--;
     }
     render();
     interval = setInterval(render, 1000);
   }
 
-  document.getElementById("refresh").addEventListener("click", ()=>fetchCode().catch(err=>alert(err.message)));
-  // Don’t auto-call until BASE is updated after deploy
+  document.getElementById("refresh").addEventListener("click", ()=>{
+    fetchCode().catch(e => showErr(e.message));
+  });
+
+  // ✅ Auto-load on page open
+  fetchCode().catch(e => showErr(e.message));
 </script>
 </body>
 </html>
