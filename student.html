@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Student Verify</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Arial;margin:0;background:#0b1220;color:#fff;display:flex;min-height:100vh;align-items:center;justify-content:center}
+    .card{width:min(520px,92vw);background:#121b2f;border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:22px;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+    h1{margin:0 0 6px;font-size:20px;opacity:.95}
+    p{margin:0 0 16px;opacity:.75}
+    input{width:100%;font-size:22px;letter-spacing:6px;text-align:center;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;outline:none}
+    button{width:100%;margin-top:12px;border:0;border-radius:14px;padding:12px;font-weight:900;background:#c1121f;color:#fff;cursor:pointer}
+    button:active{transform:scale(.99)}
+    .msg{margin-top:12px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06)}
+    .ok{border-color:rgba(34,197,94,.35)}
+    .bad{border-color:rgba(239,68,68,.35)}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>✅ Return Verification (Student)</h1>
+    <p>Enter the 6-digit code shown at the gate.</p>
+
+    <input id="code" inputmode="numeric" maxlength="6" placeholder="------" />
+    <button id="verify">Verify</button>
+
+    <div id="msg" class="msg" style="display:none;"></div>
+  </div>
+
+<script>
+  // ✅ Change this after Vercel deploy:
+  const BASE = "https://YOUR-VERCEL-PROJECT.vercel.app";
+
+  const input = document.getElementById("code");
+  const msg = document.getElementById("msg");
+
+  input.addEventListener("input", () => {
+    input.value = input.value.replace(/\D/g, "").slice(0,6);
+  });
+
+  function show(text, ok){
+    msg.style.display = "block";
+    msg.textContent = text;
+    msg.className = "msg " + (ok ? "ok" : "bad");
+  }
+
+  document.getElementById("verify").addEventListener("click", async () => {
+    const code = input.value.trim();
+    if(!/^\d{6}$/.test(code)) return show("Enter a valid 6-digit code.", false);
+
+    const r = await fetch(`${BASE}/api/verifyCode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+
+    const j = await r.json();
+    if(!j.ok) return show(j.error || "Error", false);
+    show(j.message, j.valid);
+  });
+</script>
+</body>
+</html>

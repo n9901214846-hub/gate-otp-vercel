@@ -1,0 +1,7 @@
+{
+  "name": "gate-otp-vercel",
+  "private": true,
+  "dependencies": {
+    "speakeasy": "^2.0.0"
+  }
+}
